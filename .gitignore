@@ -24,7 +24,7 @@ output 2/
 debug_frames/
 frames_rgb/
 frames_rgb 2/
-# data/
+ data/
 
 # Big media/models (optional if you use them)
 *.mp4

@@ -16,7 +16,7 @@ def decide_tags(classif, width, height, frame=None):
     """
 
     mid_x = classif.get("middle_avg_x", None)
-    dash_ok = (classif.get("middle_dash_count", 0) >= 2) and (mid_x is not None)
+    dash_ok = (classif.get("middle_dash_count", 0) >= 1) and (mid_x is not None)
     if not dash_ok:
         return False, "unknown"
 

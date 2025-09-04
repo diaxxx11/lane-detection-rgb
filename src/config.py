@@ -47,13 +47,13 @@ MID_BAND_FOR_GOOD = (0.30, 0.70)  # tighter than CENTER_BAND used for detection
 MIN_CENTER_SEP = 0.12       # 12% of image width
 
 # Fraction of the bottom vertical region to accept intersections for "good driving"
-BOTTOM_ACCEPT_BAND = 0.60    # consider only bottom 10% of frame for outer line intersections
+BOTTOM_ACCEPT_BAND = 0.30    # consider only bottom 10% of frame for outer line intersections
 
 # Save a debug frame every N frames even when not "good"
 DEBUG_EVERY_N = 30  # tweak as you like (e.g., 10 for more density)
 
 
 # If robot is in left lane → center dash should be right
-MID_BAND_LEFT_LANE  = (0.55, 0.90)   # right half  
+MID_BAND_LEFT_LANE  = (0.40, 0.95)   # right half  
 # If robot is in right lane → center dash should be left
-MID_BAND_RIGHT_LANE = (0.10, 0.45)   # left half
+MID_BAND_RIGHT_LANE = (0.05, 0.60)   # left half
