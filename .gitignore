@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Project outputs and large/generated data
+output/
+output 2/
+debug_frames/
+frames_rgb/
+frames_rgb 2/
+# data/
+
+# Big media/models (optional if you use them)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.gif
+*.webm
+*.pt
+*.pth
+*.onnx
