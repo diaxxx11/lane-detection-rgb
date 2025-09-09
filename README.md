@@ -52,3 +52,23 @@ Need me to run any of these with specific repo visibility or name? I can also ta
 - Added a project-specific `.gitignore` to exclude `venv`, caches, editor files, and your generated/output directories (`output`, `debug_frames`, `frames_rgb*`, `data`).
 - Provided concise commands to init Git, create or connect a GitHub repo, and push `main`.
 - Included optional `README.md` snippet and Git LFS guidance for large artifacts.
+
+
+
+
+
+
+
+
+
+
+commands:
+
+source venv/bin/activate
+
+python extract_frames.py
+
+python main.py
+
+rm -rf frames_rgb output
+mkdir frames_rgb output
