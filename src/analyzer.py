@@ -165,8 +165,12 @@ def decide_tags(classif, width, height, frame=None):
     return "good_driving" in tags, tags[-1] if tags else "unknown"
 
 
+# def frame_index_to_ms(idx):
+#     """Convert frame index to ms using config.FPS"""
+#     return int(round(idx * 1000.0 / config.FPS))
+
 def frame_index_to_ms(idx):
-    """Convert frame index to ms using config.FPS"""
-    return int(round(idx * 1000.0 / config.FPS))
+    """Return frame index itself instead of converting to ms"""
+    return idx
 
 
