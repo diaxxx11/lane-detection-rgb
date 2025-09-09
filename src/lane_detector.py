@@ -1,3 +1,60 @@
+# import cv2
+# import numpy as np
+# from src import config
+
+# def _roi_mask(h, w):
+#     mask = np.zeros((h, w), dtype=np.uint8)
+#     top = int(h * config.ROI_TOP_RATIO)
+#     bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
+#     polygon = np.array([[
+#         (0, h), (w, h),
+#         (w, top), (0, top)
+#     ]], np.int32)
+#     cv2.fillPoly(mask, polygon, 255)
+#     # remove bottom timestamp strip
+#     mask[bottom_cut:h, :] = 0
+#     return mask
+
+# def preprocess(frame_bgr):
+#     gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
+#     gray = cv2.GaussianBlur(gray, (5,5), 0)
+#     edges = cv2.Canny(gray, config.CANNY_LOW, config.CANNY_HIGH)
+
+#     h, w = edges.shape
+#     mask = _roi_mask(h, w)
+#     cropped = cv2.bitwise_and(edges, mask)
+
+#     # strengthen edges a bit (helps Hough on faint lines)
+#     kernel = np.ones((3,3), np.uint8)
+#     cropped = cv2.morphologyEx(cropped, cv2.MORPH_CLOSE, kernel, iterations=1)
+#     return cropped
+
+# def detect_lines(edge_img):
+#     lines = cv2.HoughLinesP(
+#         edge_img,
+#         rho=1,
+#         theta=np.pi/180,
+#         threshold=config.HOUGH_THRESHOLD,
+#         minLineLength=config.HOUGH_MIN_LINE,
+#         maxLineGap=config.HOUGH_MAX_GAP
+#     )
+#     if lines is None:
+#         return []
+#     return [l[0] for l in lines]  # (x1,y1,x2,y2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import cv2
 import numpy as np
 from src import config
@@ -16,17 +73,38 @@ def _roi_mask(h, w):
     return mask
 
 def preprocess(frame_bgr):
+    """Improved preprocessing: CLAHE, gamma correction, adaptive threshold, Canny, ROI mask."""
     gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray, (5,5), 0)
-    edges = cv2.Canny(gray, config.CANNY_LOW, config.CANNY_HIGH)
 
+    # Apply CLAHE for contrast on gray floor
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+
+    # Gamma correction (brighten midtones if floor is dark)
+    gamma = 1.2
+    look_up = np.array([((i / 255.0) ** (1/gamma)) * 255 for i in range(256)]).astype("uint8")
+    gray = cv2.LUT(gray, look_up)
+
+    # Reduce noise
+    gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # Adaptive threshold (helps with variable lighting/reflections)
+    thresh = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 15, -5
+    )
+
+    # Canny edge detection
+    edges = cv2.Canny(thresh, config.CANNY_LOW, config.CANNY_HIGH)
+
+    # Apply ROI mask
     h, w = edges.shape
     mask = _roi_mask(h, w)
     cropped = cv2.bitwise_and(edges, mask)
 
-    # strengthen edges a bit (helps Hough on faint lines)
+    # Morphological closing to strengthen broken lines
     kernel = np.ones((3,3), np.uint8)
     cropped = cv2.morphologyEx(cropped, cv2.MORPH_CLOSE, kernel, iterations=1)
+
     return cropped
 
 def detect_lines(edge_img):
@@ -41,6 +119,9 @@ def detect_lines(edge_img):
     if lines is None:
         return []
     return [l[0] for l in lines]  # (x1,y1,x2,y2)
+
+# --- Rest of the code (classify_lanes, _line_features, draw_debug, etc.)
+# stays exactly the same as you pasted ---
 
 def _line_features(line):
     x1, y1, x2, y2 = line
