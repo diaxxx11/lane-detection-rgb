@@ -62,19 +62,24 @@ def _roi_mask(h, w):
     top = int(h * config.ROI_TOP_RATIO)
     bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
 
-    # trapezoid: narrower at top, wider at bottom
-    top_margin = int(0.25 * w)   # shrink top width by 25% on both sides
+    # Trapezoid parameters (make wider or narrower here)
+    top_width_ratio = 0.85   # closer to 1.0 → wider at top
+    bottom_width_ratio = 1.0 # full width at bottom
+
+    top_left = int((1 - top_width_ratio) / 2 * w)
+    top_right = int((1 + top_width_ratio) / 2 * w)
+
     polygon = np.array([[
-        (top_margin, top),         # top-left
-        (w - top_margin, top),     # top-right
-        (w, h),                    # bottom-right
-        (0, h)                     # bottom-left
+        (0, h), (w, h),
+        (top_right, top),
+        (top_left, top)
     ]], np.int32)
 
     cv2.fillPoly(mask, polygon, 255)
     # remove bottom timestamp strip
     mask[bottom_cut:h, :] = 0
     return mask
+
 
 def preprocess(frame_bgr):
     """Improved preprocessing: CLAHE, gamma correction, adaptive threshold, Canny, ROI mask."""
