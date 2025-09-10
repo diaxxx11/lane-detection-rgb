@@ -53,8 +53,6 @@
 
 
 
-
-
 import cv2
 import numpy as np
 from src import config
@@ -63,10 +61,16 @@ def _roi_mask(h, w):
     mask = np.zeros((h, w), dtype=np.uint8)
     top = int(h * config.ROI_TOP_RATIO)
     bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
+
+    # trapezoid: narrower at top, wider at bottom
+    top_margin = int(0.25 * w)   # shrink top width by 25% on both sides
     polygon = np.array([[
-        (0, h), (w, h),
-        (w, top), (0, top)
+        (top_margin, top),         # top-left
+        (w - top_margin, top),     # top-right
+        (w, h),                    # bottom-right
+        (0, h)                     # bottom-left
     ]], np.int32)
+
     cv2.fillPoly(mask, polygon, 255)
     # remove bottom timestamp strip
     mask[bottom_cut:h, :] = 0
@@ -120,9 +124,6 @@ def detect_lines(edge_img):
         return []
     return [l[0] for l in lines]  # (x1,y1,x2,y2)
 
-# --- Rest of the code (classify_lanes, _line_features, draw_debug, etc.)
-# stays exactly the same as you pasted ---
-
 def _line_features(line):
     x1, y1, x2, y2 = line
     dx = (x2 - x1) if (x2 - x1) != 0 else 1e-6
@@ -144,21 +145,6 @@ def _bottom_x_intercept(line, height):
     return float(x_at_bottom)
 
 def classify_lanes(lines, width, height):
-    """
-    Returns:
-      dict = {
-        'has_left_outer': bool,
-        'has_right_outer': bool,
-        'middle_dash_count': int,
-        'middle_avg_x': float or None,
-        'lines_kept': list[(x1,y1,x2,y2)],
-        'left_candidates': list[(x1,y1,x2,y2)],
-        'right_candidates': list[(x1,y1,x2,y2)],
-        'dash_candidates': list[(x1,y1,x2,y2)],
-        'left_bottom_xs': list[float],   # outer-line bottom intercepts (pixels)
-        'right_bottom_xs': list[float],
-      }
-    """
     left_cands, right_cands, dash_cands, kept = [], [], [], []
     left_bxs, right_bxs = [], []
 
@@ -171,11 +157,9 @@ def classify_lanes(lines, width, height):
             continue  # too horizontal
         kept.append(L)
 
-        # dashed middle: short segments near image center
         if cx_min <= mx <= cx_max and config.DASH_MIN <= length <= config.DASH_MAX:
             dash_cands.append(L)
 
-        # outer candidates: long lines, classify by which side they lean + bottom-x
         if length >= config.LONG_LINE_THRESH:
             bx = _bottom_x_intercept(L, height)
             if bx is None:
@@ -187,9 +171,7 @@ def classify_lanes(lines, width, height):
                 right_cands.append(L)
                 right_bxs.append(bx)
 
-    # Count dashed segments with vertical separation so we don't double-count
     if dash_cands:
-        # sort by center y so separated dashes are counted
         def my_of(L):
             return (L[1] + L[3]) / 2.0
         dash_sorted = sorted(dash_cands, key=my_of)
@@ -226,24 +208,33 @@ def draw_debug(frame_bgr, info):
     vis = frame_bgr.copy()
     h, w, _ = vis.shape
 
-    # ROI box + bottom cut line
+    # ROI trapezoid overlay
     top = int(h * config.ROI_TOP_RATIO)
     bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
-    cv2.rectangle(vis, (0, top), (w, h), (255, 255, 0), 1)
+    top_margin = int(0.25 * w)
+    roi_polygon = np.array([
+        (top_margin, top),
+        (w - top_margin, top),
+        (w, h),
+        (0, h)
+    ], np.int32)
+
+    overlay = vis.copy()
+    cv2.fillPoly(overlay, [roi_polygon], (0, 255, 0))
+    vis = cv2.addWeighted(overlay, 0.2, vis, 0.8, 0)
+
+    # Bottom cut line
     cv2.line(vis, (0, bottom_cut), (w, bottom_cut), (0, 255, 255), 1)
 
     # Draw Hough lines
     for (x1,y1,x2,y2) in info.get('lines_kept', []):
         cv2.line(vis, (x1,y1), (x2,y2), (0,255,0), 2)
     for L in info.get('dash_candidates', []):
-        x1,y1,x2,y2 = L
-        cv2.line(vis, (x1,y1), (x2,y2), (0,0,255), 3)  # dashed = red
+        cv2.line(vis, (L[0],L[1]), (L[2],L[3]), (0,0,255), 3)
     for L in info.get('left_candidates', []):
-        x1,y1,x2,y2 = L
-        cv2.line(vis, (x1,y1), (x2,y2), (255,0,0), 3)  # left outer = blue
+        cv2.line(vis, (L[0],L[1]), (L[2],L[3]), (255,0,0), 3)
     for L in info.get('right_candidates', []):
-        x1,y1,x2,y2 = L
-        cv2.line(vis, (x1,y1), (x2,y2), (0,165,255), 3)  # right outer = orange
+        cv2.line(vis, (L[0],L[1]), (L[2],L[3]), (0,165,255), 3)
 
     # Center bands
     cx_min = int(config.CENTER_BAND[0] * w)

@@ -173,16 +173,16 @@
 #     """Return frame index itself instead of converting to ms"""
 #     return idx
 
-
 import cv2
 from src import config
 
 def decide_tags(classif, width, height, frame=None):
     """
     Decide lane tags and 'good_driving'.
-    Returns:
-        good (bool): True if 'good_driving' conditions are satisfied.
-        lane_tag (str): "left_lane", "right_lane", or "unknown".
+    Good driving = robot is inside either lane:
+      - both outer continuous lines are visible (left + right)
+      - a dashed center line is visible
+      - and the dashed line is reasonably near the middle
     """
 
     mid_x = classif.get("middle_avg_x", None)
@@ -202,21 +202,12 @@ def decide_tags(classif, width, height, frame=None):
 
     # ---- Good driving ----
     good = False
-    if dash_count >= 1:
-        dash_lines = classif.get("dash_candidates", [])
-        dash_slopes = [((l[3]-l[1])/(l[2]-l[0]+1e-6)) for l in dash_lines]
-
-        if left_outer and not right_outer:
-            if dash_lines and any(s < 0 for s in dash_slopes):
-                good = True
-        elif right_outer and not left_outer:
-            if dash_lines and any(s > 0 for s in dash_slopes):
-                good = True
-        elif left_outer and right_outer and mid_x is not None:
-            if mid_x >= width * 0.5 and any(s < 0 for s in dash_slopes):
-                good = True
-            elif mid_x < width * 0.5 and any(s > 0 for s in dash_slopes):
-                good = True
+    if dash_count >= 1 and left_outer and right_outer and mid_x is not None:
+        # dash must be in the acceptable mid band
+        band_min, band_max = config.MID_BAND_FOR_GOOD
+        frac = mid_x / width
+        if band_min <= frac <= band_max:
+            good = True
 
     # ---- Debug visualization ----
     if frame is not None:
@@ -230,8 +221,5 @@ def decide_tags(classif, width, height, frame=None):
 
 
 def frame_index_to_ms(idx):
-    """
-    Return frame index itself instead of converting to ms.
-    Keeps frame numbers aligned with debug frames and output.
-    """
+    """Keep frame index as ms marker (no scaling)."""
     return idx
