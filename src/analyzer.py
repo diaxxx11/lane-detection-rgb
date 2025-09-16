@@ -173,37 +173,55 @@
 #     """Return frame index itself instead of converting to ms"""
 #     return idx
 
+
+
+
+
+
+# src/analyzer.py
 import cv2
 from src import config
 
 def decide_tags(classif, width, height, frame=None):
     """
-    Decide lane tags and 'good_driving'.
-    Good driving = robot is inside either lane:
-      - both outer continuous lines are visible (left + right)
-      - a dashed center line is visible
-      - and the dashed line is reasonably near the middle
+    Decide lane tags and 'good_driving' for a two-lane road.
+    
+    Lane detection logic:
+      - If both outer solids are detected → decide lane by dashed line position
+      - If only left solid is seen → assume right lane
+      - If only right solid is seen → assume left lane
+      - Else → unknown
+
+    Good driving:
+      - Must have dashed line + both outer lines
+      - Dashed must fall within config.MID_BAND_FOR_GOOD (normalized x range)
     """
 
     mid_x = classif.get("middle_avg_x", None)
     dash_count = classif.get("middle_dash_count", 0)
-    left_outer = classif.get("left_candidates", [])
-    right_outer = classif.get("right_candidates", [])
+    left_bxs = classif.get("left_bottom_xs", [])
+    right_bxs = classif.get("right_bottom_xs", [])
+
+    has_left = len(left_bxs) > 0
+    has_right = len(right_bxs) > 0
 
     # ---- Lane side tagging ----
-    if left_outer and not right_outer:
-        lane_tag = "left_lane"
-    elif right_outer and not left_outer:
+    lane_tag = "unknown"
+    if has_left and has_right:
+        if mid_x is not None:
+            # Compare dashed line x to screen center
+            if mid_x < width * 0.5:
+                lane_tag = "right_lane"
+            else:
+                lane_tag = "left_lane"
+    elif has_left and not has_right:
         lane_tag = "right_lane"
-    elif mid_x is not None:
-        lane_tag = "left_lane" if mid_x >= width * 0.5 else "right_lane"
-    else:
-        lane_tag = "unknown"
+    elif has_right and not has_left:
+        lane_tag = "left_lane"
 
     # ---- Good driving ----
     good = False
-    if dash_count >= 1 and left_outer and right_outer and mid_x is not None:
-        # dash must be in the acceptable mid band
+    if has_left and has_right and dash_count >= 1 and mid_x is not None:
         band_min, band_max = config.MID_BAND_FOR_GOOD
         frac = mid_x / width
         if band_min <= frac <= band_max:
@@ -213,7 +231,8 @@ def decide_tags(classif, width, height, frame=None):
     if frame is not None:
         h = frame.shape[0]
         if mid_x is not None:
-            cv2.circle(frame, (int(mid_x), h - 10), 6, (255, 0, 0), -1)
+            cv2.circle(frame, (int(mid_x), h - 20), 6, (0, 0, 255), -1)  # mark dash
+        # show horizontal acceptance band (for bottom region)
         min_y = int(height * (1.0 - config.BOTTOM_ACCEPT_BAND))
         cv2.line(frame, (0, min_y), (width, min_y), (0, 255, 255), 2)
 
