@@ -208,12 +208,15 @@ def decide_tags(classif, width, height, frame=None):
     # ---- Lane side tagging ----
     lane_tag = "unknown"
     if has_left and has_right:
-        if mid_x is not None:
-            # Compare dashed line x to screen center
-            if mid_x < width * 0.5:
-                lane_tag = "right_lane"
-            else:
-                lane_tag = "left_lane"
+        # Use bottom-most x coordinates of left and right lines
+        left_x = left_bxs[0]  # lowest point detected on left solid
+        right_x = right_bxs[0]  # lowest point detected on right solid
+        mid_frame_x = width // 2
+        # whichever side your car is closer to decides lane
+        if abs(mid_frame_x - left_x) < abs(mid_frame_x - right_x):
+            lane_tag = "left_lane"
+        else:
+            lane_tag = "right_lane"
     elif has_left and not has_right:
         lane_tag = "right_lane"
     elif has_right and not has_left:

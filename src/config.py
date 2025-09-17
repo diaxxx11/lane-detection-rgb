@@ -17,7 +17,7 @@ OUTPUT_FILE = os.path.join(OUTPUT_DIR, "sections.txt")
 SAVE_DEBUG_FRAMES = True
 
 # === ROI (region of interest) ===
-ROI_TOP_RATIO = 0.3        # keep bottom 55% of the frame (road area)
+ROI_TOP_RATIO = 0.4        # keep bottom 40% of the frame (road area)
 BOTTOM_CROP_RATIO = 0.06    # crop out bottom strip (timestamp text area), e.g., last 6%
 
 # === Hough/Canny parameters (tweak if needed) ===
