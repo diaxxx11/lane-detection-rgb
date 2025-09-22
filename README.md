@@ -72,3 +72,7 @@ python main.py
 
 rm -rf frames_rgb output frames_rgb 2 output 2 frames_rgb 3 output 3
 mkdir frames_rgb output
+
+
+
+
