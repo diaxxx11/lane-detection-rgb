@@ -1,58 +1,4 @@
-# import cv2
-# import numpy as np
-# from src import config
-
-# def _roi_mask(h, w):
-#     mask = np.zeros((h, w), dtype=np.uint8)
-#     top = int(h * config.ROI_TOP_RATIO)
-#     bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
-#     polygon = np.array([[
-#         (0, h), (w, h),
-#         (w, top), (0, top)
-#     ]], np.int32)
-#     cv2.fillPoly(mask, polygon, 255)
-#     # remove bottom timestamp strip
-#     mask[bottom_cut:h, :] = 0
-#     return mask
-
-# def preprocess(frame_bgr):
-#     gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-#     gray = cv2.GaussianBlur(gray, (5,5), 0)
-#     edges = cv2.Canny(gray, config.CANNY_LOW, config.CANNY_HIGH)
-
-#     h, w = edges.shape
-#     mask = _roi_mask(h, w)
-#     cropped = cv2.bitwise_and(edges, mask)
-
-#     # strengthen edges a bit (helps Hough on faint lines)
-#     kernel = np.ones((3,3), np.uint8)
-#     cropped = cv2.morphologyEx(cropped, cv2.MORPH_CLOSE, kernel, iterations=1)
-#     return cropped
-
-# def detect_lines(edge_img):
-#     lines = cv2.HoughLinesP(
-#         edge_img,
-#         rho=1,
-#         theta=np.pi/180,
-#         threshold=config.HOUGH_THRESHOLD,
-#         minLineLength=config.HOUGH_MIN_LINE,
-#         maxLineGap=config.HOUGH_MAX_GAP
-#     )
-#     if lines is None:
-#         return []
-#     return [l[0] for l in lines]  # (x1,y1,x2,y2)
-
-
-
-
-
-
-
-
-
-
-
-
+# lane_detector.py
 import cv2
 import numpy as np
 from src import config
@@ -271,6 +217,7 @@ def draw_debug(frame_bgr, info):
     if mid_x is not None:
         cv2.circle(vis, (int(mid_x), int(h*0.75)), 5, (0,0,255), -1)
 
+<<<<<<< HEAD
     return vis
 
 def roi_polygon_points(h, w):
@@ -284,3 +231,6 @@ def roi_polygon_points(h, w):
         (top_right, top),
         (top_left, top)
     ], np.int32)
+=======
+    return vis
+>>>>>>> bb22f9f (last stable update)
