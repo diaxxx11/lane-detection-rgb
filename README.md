@@ -59,19 +59,22 @@ Need me to run any of these with specific repo visibility or name? I can also ta
 
 
 
+1) add an RGB recording under data/rgb_data
+
+2) run these commands
+  commands:
+
+  1) create a venv
+    source venv/bin/activate
+
+  2) python extract_frames.py
+
+  3) python main.py
 
 
-
-commands:
-
-source venv/bin/activate
-
-python extract_frames.py
-
-python main.py
-
-rm -rf frames_rgb output frames_rgb 2 output 2 frames_rgb 3 output 3
-mkdir frames_rgb output
+to delete output data before rerunning:
+  rm -rf frames_rgb output frames_rgb 2 output 2 frames_rgb 3 output 3
+  mkdir frames_rgb output
 
 
 

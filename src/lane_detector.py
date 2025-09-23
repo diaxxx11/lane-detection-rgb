@@ -1,4 +1,3 @@
-# lane_detector.py
 import cv2
 import numpy as np
 from src import config
@@ -170,9 +169,8 @@ def draw_debug(frame_bgr, info):
         (0, h)
     ], np.int32)
 
-    polygon = roi_polygon_points(h, w)
     overlay = vis.copy()
-    cv2.fillPoly(overlay, [polygon], (0,255,0))
+    cv2.fillPoly(overlay, [roi_polygon], (0, 255, 0))
     vis = cv2.addWeighted(overlay, 0.2, vis, 0.8, 0)
 
     # Bottom cut line
@@ -217,20 +215,4 @@ def draw_debug(frame_bgr, info):
     if mid_x is not None:
         cv2.circle(vis, (int(mid_x), int(h*0.75)), 5, (0,0,255), -1)
 
-<<<<<<< HEAD
     return vis
-
-def roi_polygon_points(h, w):
-    top = int(h * config.ROI_TOP_RATIO)
-    bottom_cut = int(h * (1.0 - config.BOTTOM_CROP_RATIO))
-    top_width_ratio = 0.85
-    top_left = int((1 - top_width_ratio) / 2 * w)
-    top_right = int((1 + top_width_ratio) / 2 * w)
-    return np.array([
-        (0, h), (w, h),
-        (top_right, top),
-        (top_left, top)
-    ], np.int32)
-=======
-    return vis
->>>>>>> bb22f9f (last stable update)

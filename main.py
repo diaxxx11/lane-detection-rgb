@@ -1,4 +1,3 @@
-#  main.py
 import os
 import cv2
 from src.lane_detector import preprocess, detect_lines, classify_lanes, draw_debug
